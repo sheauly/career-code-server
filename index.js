@@ -33,11 +33,26 @@ async function run() {
         const jobsCollection = client.db('careerCodeDB').collection('jobs');
         const applicationsCollection = client.db('careerCode').collection('application');
 
-        app.get('/jobs', async (req, res) => {
-            const cursor = jobsCollection.find();
+        // jobs api
+            app.get('/jobs', async (req, res) => {
+            const email = req.query.email;
+            const query = {};
+            if (email) {
+                query.hr_email = email;
+
+            }
+            const cursor = jobsCollection.find(query);
             const result = await cursor.toArray();
             res.send(result);
         });
+
+        // could be done
+        // app.get('/jobsByEmailAddress', async (req, res) => {
+        //     const email = req.query.email;
+        //     const query = { hr_email: email }
+        //     const result = await jobsCollection.find(query).toArray();
+        //     res.send(result)
+        // })
 
         app.get('/jobs/:id', async (req, res) => {
             const id = req.params.id;
@@ -45,6 +60,13 @@ async function run() {
             const result = await jobsCollection.findOne(query);
             res.send(result);
         });
+
+        app.post('/jobs', async (req, res) => {
+            const newJob = req.body;
+            console.log(newJob);
+            const result = await jobsCollection.insertOne(newJob);
+            res.send(result);
+        })
 
         // job application related apis
         app.get('/applications', async (req, res) => {
