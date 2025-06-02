@@ -1,6 +1,7 @@
 const express = require('express')
 const cors = require('cors')
 const app = express();
+const jwt = require('jsonwebtoken');
 require('dotenv').config()
 const port = process.env.PORT || 3000;
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
@@ -33,8 +34,16 @@ async function run() {
         const jobsCollection = client.db('careerCodeDB').collection('jobs');
         const applicationsCollection = client.db('careerCode').collection('application');
 
+
+        // iwt token related api
+        app.post('/jwt', async (req, res) => {
+            const { email } = req.body;
+            const user = { email }
+            const token = jwt.sign(user, 'secret', { expiresIn: '1h' });
+            res.send({token})
+        })
         // jobs api
-            app.get('/jobs', async (req, res) => {
+        app.get('/jobs', async (req, res) => {
             const email = req.query.email;
             const query = {};
             if (email) {
@@ -53,6 +62,13 @@ async function run() {
         //     const result = await jobsCollection.find(query).toArray();
         //     res.send(result)
         // })
+
+        app.get('/applications/job/:job_id', async (req, res) => {
+            const job_id = req.params.job_id;
+            const query = { jobId: job_id }
+            const result = await applicationsCollection.find(query).toArray();
+            res.send(result);
+        })
 
         app.get('/jobs/:id', async (req, res) => {
             const id = req.params.id;
@@ -93,6 +109,18 @@ async function run() {
             const application = req.body;
             console.log(application)
             const result = await applicationsCollection.insertOne(application);
+            res.send(result);
+        })
+
+        app.patch('/applications/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) }
+            const updatedDoc = {
+                $set: {
+                    status: req.body.status
+                }
+            }
+            const result = await applicationsCollection.updateOne(filter, updatedDoc);
             res.send(result);
         })
 
